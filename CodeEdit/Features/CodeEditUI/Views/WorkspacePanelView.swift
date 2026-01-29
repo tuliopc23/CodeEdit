@@ -45,7 +45,6 @@ struct WorkspacePanelView<Tab: WorkspacePanelTab, ViewModel: ObservableObject>: 
                 HStack(spacing: 0) {
                     WorkspacePanelTabBar(items: $tabItems, selection: $selectedTab, position: sidebarPosition)
                     Divider()
-                        .overlay(Color(nsColor: darkDivider && colorScheme == .dark ? .black : .clear))
                 }
             }
         }

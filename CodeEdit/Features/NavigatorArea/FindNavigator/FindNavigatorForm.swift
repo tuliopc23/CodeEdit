@@ -100,9 +100,12 @@ struct FindNavigatorForm: View {
                 onClear: {
                     state.clearResults()
                 },
-                hasValue: caseSensitive
+                hasValue: caseSensitive,
+                focusBinding: Binding(get: { isSearchFieldFocused }, set: { isSearchFieldFocused = $0 })
             )
-            .focused($isSearchFieldFocused)
+            .onAppear {
+                isSearchFieldFocused = true
+            }
             .onSubmit {
                 if !state.searchQuery.isEmpty {
                     Task {

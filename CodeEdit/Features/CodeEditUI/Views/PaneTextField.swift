@@ -33,6 +33,8 @@ struct PaneTextField<LeadingAccessories: View, TrailingAccessories: View>: View 
 
     var hasValue: Bool
 
+    var focusBinding: Binding<Bool>?
+
     init(
         _ label: String,
         text: Binding<String>,
@@ -41,7 +43,8 @@ struct PaneTextField<LeadingAccessories: View, TrailingAccessories: View>: View 
         @ViewBuilder trailingAccessories: () -> TrailingAccessories? = { EmptyView() },
         clearable: Bool? = false,
         onClear: (() -> Void)? = {},
-        hasValue: Bool? = false
+        hasValue: Bool? = false,
+        focusBinding: Binding<Bool>? = nil
     ) {
         self.label = label
         _text = text
@@ -51,6 +54,7 @@ struct PaneTextField<LeadingAccessories: View, TrailingAccessories: View>: View 
         self.clearable = clearable ?? false
         self.onClear = onClear ?? {}
         self.hasValue = hasValue ?? false
+        self.focusBinding = focusBinding
     }
 
     @ViewBuilder
@@ -86,6 +90,14 @@ struct PaneTextField<LeadingAccessories: View, TrailingAccessories: View>: View 
                 TextField(label, text: $text, axis: axis)
                     .textFieldStyle(.plain)
                     .focused($isFocused)
+                    .onChange(of: isFocused) { newValue in
+                        focusBinding?.wrappedValue = newValue
+                    }
+                    .onChange(of: focusBinding?.wrappedValue) { newValue in
+                        if let newValue, newValue != isFocused {
+                            isFocused = newValue
+                        }
+                    }
                     .controlSize(.small)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3.5)

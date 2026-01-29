@@ -17,7 +17,7 @@ struct CodeFileView: View {
     @ObservedObject private var editorInstance: EditorInstance
     @ObservedObject private var codeFile: CodeFileDocument
 
-    @State private var treeSitterClient: TreeSitterClient = TreeSitterClient()
+    @State private var treeSitterClient: EnhancedTreeSitterClient = EnhancedTreeSitterClient()
 
     /// Any coordinators passed to the view.
     private var textViewCoordinators: [TextViewCoordinator]
@@ -66,8 +66,6 @@ struct CodeFileView: View {
     @EnvironmentObject var undoRegistration: UndoManagerRegistration
 
     @ObservedObject private var themeModel: ThemeModel = .shared
-
-    @State private var treeSitter = TreeSitterClient()
 
     private var cancellables = Set<AnyCancellable>()
 

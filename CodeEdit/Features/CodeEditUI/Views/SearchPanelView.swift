@@ -17,6 +17,7 @@ struct SearchPanelView<RowView: View, PreviewView: View, Option: Identifiable & 
 
     @State var selection: Option?
     @State var previewVisible: Bool = true
+    @FocusState private var isFocused: Bool
 
     let title: String
     let image: Image
@@ -63,6 +64,7 @@ struct SearchPanelView<RowView: View, PreviewView: View, Option: Identifiable & 
                     TextField(title, text: $text)
                         .font(.system(size: 20, weight: .light, design: .default))
                         .textFieldStyle(.plain)
+                        .focused($isFocused)
                         .onSubmit {
                             if let selection {
                                 onRowClick(selection)
@@ -78,6 +80,9 @@ struct SearchPanelView<RowView: View, PreviewView: View, Option: Identifiable & 
                                     selection = options.first
                                 }
                             }
+                        }
+                        .onAppear {
+                            isFocused = true
                         }
                     if hasPreview {
                         PreviewToggle(previewVisible: $previewVisible)
