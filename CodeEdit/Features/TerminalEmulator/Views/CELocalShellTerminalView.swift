@@ -6,7 +6,6 @@
 //
 
 import AppKit
-import SwiftTerm
 import Foundation
 
 /// # Dev Note (please read)

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftTerm
 
 /// Stores a mapping of ID -> terminal view for reusing terminal views.
 /// This allows terminal views to continue to receive data even when not in the view hierarchy.

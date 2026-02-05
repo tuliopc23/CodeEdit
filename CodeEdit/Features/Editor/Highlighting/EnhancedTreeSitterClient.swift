@@ -51,20 +51,28 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
 
     private func loadQueries(for language: CodeLanguage) {
         // Normalize pipeline: Try to load from Resources first (overrides), then fallback to bundled
-        guard language.id == .swift else { return }
 
         // Logic to load swift.scm from Bundle.main (requires file to be added to Xcode project resources)
-        if let url = Bundle.main.url(forResource: "swift", withExtension: "scm"),
+        if let url = Bundle.main.url(forResource: language.id.rawValue, withExtension: "scm"),
            let queryData = try? Data(contentsOf: url),
            let tsLanguage = language.language {
             self.query = try? Query(language: tsLanguage, data: queryData)
-            print("Loaded custom swift.scm from bundle")
-        } else {
-            // Fallback to default
-            print("Using default queries or failed to load swift.scm")
+            print("Loaded custom \(language.id.rawValue).scm from bundle")
+            return
         }
+
+        // Fallback to CodeLanguage defaults
+        if let queryURL = language.queryURL,
+           let queryData = try? Data(contentsOf: queryURL),
+           let tsLanguage = language.language {
+            self.query = try? Query(language: tsLanguage, data: queryData)
+            print("Loaded default query for \(language.id.rawValue)")
+            return
+        }
+
+        print("Using default queries or failed to load \(language.id.rawValue).scm")
     }
-    
+
     private func pointForLocation(_ location: Int) -> Point? {
         guard let textView = textView,
               let line = textView.layoutManager.textLineForOffset(location) else {
@@ -74,7 +82,12 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         return Point(row: UInt32(line.index), column: UInt32(column))
     }
 
-    public func applyEdit(textView: TextView, range: NSRange, delta: Int, completion: @escaping @MainActor (Result<IndexSet, any Error>) -> Void) {
+    public func applyEdit(
+        textView: TextView,
+        range: NSRange,
+        delta: Int,
+        completion: @escaping @MainActor (Result<IndexSet, any Error>) -> Void
+    ) {
         // Use self.textView to ensure we reference the correct editor instance
         guard let textView = self.textView else {
             completion(.success(IndexSet()))
@@ -84,11 +97,11 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         let startByte = UInt32(range.location)
         let oldEndByte = UInt32(range.location + range.length)
         let newEndByte = UInt32(range.location + range.length + delta)
-        
+
         if let startPoint = pointForLocation(Int(startByte)),
            let oldEndPoint = pointForLocation(Int(oldEndByte)),
            let newEndPoint = pointForLocation(Int(newEndByte)) {
-            
+
             let edit = InputEdit(
                 startByte: startByte,
                 oldEndByte: oldEndByte,
@@ -97,7 +110,7 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
                 oldEndPoint: oldEndPoint,
                 newEndPoint: newEndPoint
             )
-            
+
             if let parser = parser, let tree = tree {
                 tree.edit(edit)
                 self.tree = parser.parse(tree: tree, string: textView.string)
@@ -117,22 +130,26 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         completion(.success(indexSet))
     }
 
-    public func queryHighlightsFor(textView: TextView, range: NSRange, completion: @escaping @MainActor (Result<[HighlightRange], any Error>) -> Void) {
+    public func queryHighlightsFor(
+        textView: TextView,
+        range: NSRange,
+        completion: @escaping @MainActor (Result<[HighlightRange], any Error>) -> Void
+    ) {
         guard let tree = tree, let query = query, let rootNode = tree.rootNode else {
             completion(.success([]))
             return
         }
-        
+
         // Execute query
         let cursor = query.execute(node: rootNode, in: tree)
         cursor.setRange(range)
-        
+
         var highlights: [HighlightRange] = []
-        
+
         for match in cursor {
             for capture in match.captures {
                 guard let captureNameString = capture.name else { continue }
-                
+
                 // Resolve CaptureName
                 var captureName = CaptureName.fromString(captureNameString)
                 if captureName == nil {
@@ -142,16 +159,16 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
                         captureName = CaptureName.fromString(String(first))
                     }
                 }
-                
+
                 guard let finalCaptureName = captureName else { continue }
-                
+
                 let range = capture.node.range
-                
+
                 // Map to HighlightRange
                 highlights.append(HighlightRange(range: range, capture: finalCaptureName))
             }
         }
-        
+
         completion(.success(highlights))
     }
 }

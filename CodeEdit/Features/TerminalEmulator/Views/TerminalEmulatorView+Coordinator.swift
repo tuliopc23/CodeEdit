@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftTerm
 
 extension TerminalEmulatorView {
     final class Coordinator: NSObject, CELocalShellTerminalViewDelegate {

@@ -6,7 +6,6 @@
 //
 
 import AppKit
-import SwiftTerm
 
 class CEActiveTaskTerminalView: CELocalShellTerminalView {
     var activeTask: CEActiveTask

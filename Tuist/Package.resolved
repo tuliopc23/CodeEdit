@@ -1,4 +1,5 @@
 {
+  "originHash" : "5715211a9e1bb7a96937a3c636d0c1bdad2f20277ca5da2818360741a6eb4619",
   "pins" : [
     {
       "identity" : "aboutwindow",
@@ -235,15 +236,6 @@
       }
     },
     {
-      "identity" : "swiftterm",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/thecoolwinter/SwiftTerm",
-      "state" : {
-        "branch" : "codeedit",
-        "revision" : "2f36f54742d3882e69ff009d084e8675b80934bd"
-      }
-    },
-    {
       "identity" : "swifttreesitter",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ChimeHQ/SwiftTreeSitter.git",
@@ -307,5 +299,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

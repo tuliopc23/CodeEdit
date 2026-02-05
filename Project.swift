@@ -28,7 +28,7 @@ let project = Project(
             destinations: .macOS,
             product: .app,
             bundleId: "app.codeedit.CodeEdit",
-            deploymentTargets: .macOS("14.0"),
+            deploymentTargets: .macOS("26.0"),
             infoPlist: .file(path: "CodeEdit/Info.plist"),
             sources: ["CodeEdit/**"],
             resources: [
@@ -60,11 +60,10 @@ let project = Project(
                 .external(name: "Sparkle"),
                 .external(name: "AsyncAlgorithms"),
                 .external(name: "Collections"),
-                .external(name: "SwiftGlob"),
+                .external(name: "Glob"),
                 .external(name: "SnapshotTesting"),
                 .external(name: "SwiftSyntax"),
-                .external(name: "SwiftLintPlugin"),
-                .external(name: "SwiftTerm"),
+                .external(name: "SwiftLint"),
                 .external(name: "SwiftTreeSitter"),
                 .external(name: "SwiftUIIntrospect"),
                 .external(name: "TextFormation"),
@@ -76,7 +75,9 @@ let project = Project(
             settings: .settings(
                 base: [
                     "ENABLE_HARDENED_RUNTIME": "YES",
-                    "PRODUCT_NAME": "CodeEdit"
+                    "PRODUCT_NAME": "CodeEdit",
+                    "OTHER_SWIFT_FLAGS": "$(inherited) -strict-concurrency=complete",
+                    "ARCHS": "arm64"
                 ]
             )
         ),

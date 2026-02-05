@@ -10,6 +10,7 @@ CodeEdit is a native code editor for macOS, written entirely in Swift and SwiftU
 *   **UI Framework:** SwiftUI
 *   **Platform:** macOS
 *   **IDE:** Xcode
+*   **Project Management:** Tuist
 *   **Architecture:** Modular architecture with Feature-based organization (`CodeEdit/Features/...`). Uses a `ServiceContainer` for dependency injection.
 
 ## Key Directories
@@ -19,22 +20,36 @@ CodeEdit is a native code editor for macOS, written entirely in Swift and SwiftU
     *   `Utils/`: General utility classes and extensions.
     *   `Resources/`: App resources.
 *   `CodeEditUI/`: Reusable UI components.
-*   `CodeEdit.xcodeproj`: The Xcode project file.
+*   `Project.swift`: The Tuist project definition.
+*   `Tuist/`: Tuist configuration and dependencies.
 *   `.github/`: GitHub Actions workflows and scripts.
 
 ## Build and Run
 
+### Prerequisites
+*   **Tuist:** This project uses [Tuist](https://tuist.io) for project generation and management. Ensure you have it installed.
+
+### Setup
+1.  **Install Dependencies:**
+    ```bash
+    tuist install
+    ```
+2.  **Generate Project:**
+    ```bash
+    tuist generate
+    ```
+
 ### Building
-The project is built using Xcode. You can open `CodeEdit.xcodeproj` and build the `CodeEdit` scheme.
+You can build using Tuist or by opening the generated Xcode project.
+```bash
+tuist build
+```
+Or open the generated `CodeEdit.xcodeproj` and run standard Xcode build commands (Cmd + B).
 
 ### Testing
-Tests are run using `xcodebuild` via a helper script.
-
-**Command:**
+Run tests using Tuist:
 ```bash
-./.github/scripts/test_app.sh arm  # For Apple Silicon
-# or
-./.github/scripts/test_app.sh x86_64 # For Intel
+tuist test
 ```
 
 ### Linting
@@ -61,10 +76,11 @@ swiftlint --reporter github-actions-logging --strict
     *   Tests must pass before merging.
 
 ## Quick Start
-1.  Open `CodeEdit.xcodeproj` in Xcode.
-2.  Wait for Swift Package Manager to resolve dependencies.
-3.  Select the `CodeEdit` scheme.
-4.  Build and Run (Cmd + R).
+1.  Install Tuist if not already installed.
+2.  Run `tuist install` to fetch dependencies.
+3.  Run `tuist generate` to create the Xcode project.
+4.  Open `CodeEdit.xcodeproj` in Xcode.
+5.  Build and Run (Cmd + R).
 
 <skills_system priority="1">
 

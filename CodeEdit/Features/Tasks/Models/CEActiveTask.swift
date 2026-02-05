@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Combine
-import SwiftTerm
 
 /// Stores the state of a task once it's executed
 class CEActiveTask: ObservableObject, Identifiable, Hashable {

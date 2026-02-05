@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 import PackageDescription
 
 #if TUIST
@@ -22,7 +22,6 @@ import PackageDescription
             "WelcomeWindow": .framework,
             "AboutWindow": .framework,
             "CodeEditSourceEditor": .framework,
-            "SwiftTerm": .framework,
             "AnyCodable": .framework,
             "CodeEditLanguages": .framework,
             "CodeEditTextView": .framework,
@@ -33,9 +32,11 @@ import PackageDescription
             "Queue": .framework,
             "Rearrange": .framework,
             "Semaphore": .framework,
-            "SwiftGlob": .framework,
+            "Glob": .framework,
             "SwiftSyntax": .framework,
+            "SwiftLint": .framework,
             "SwiftTreeSitter": .framework,
+
             "TextFormation": .framework,
             "TextStory": .framework,
             "TreeSitter": .framework
@@ -45,6 +46,9 @@ import PackageDescription
 
 let package = Package(
     name: "CodeEdit",
+    platforms: [
+        .macOS("26.0")
+    ],
     dependencies: [
         .package(url: "https://github.com/CodeEditApp/AboutWindow", exact: "1.0.0"),
         .package(url: "https://github.com/Flight-School/AnyCodable", exact: "0.6.7"),
@@ -72,7 +76,6 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", exact: "1.14.2"),
         .package(url: "https://github.com/apple/swift-syntax.git", exact: "509.1.1"),
         .package(url: "https://github.com/lukepistrol/SwiftLintPlugin", exact: "0.59.1"),
-        .package(url: "https://github.com/thecoolwinter/SwiftTerm", branch: "codeedit"),
         .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", exact: "0.25.0"),
         .package(url: "https://github.com/siteline/SwiftUI-Introspect.git", exact: "1.3.0"),
         .package(url: "https://github.com/ChimeHQ/TextFormation", exact: "0.9.0"),
