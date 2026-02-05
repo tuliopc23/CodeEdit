@@ -17,6 +17,9 @@ class EditorInstance: ObservableObject, Hashable {
     /// The file presented in this editor instance.
     let file: CEWorkspaceFile
 
+    /// The Vim state for this editor instance.
+    let vimState = VimState()
+
     /// A publisher for the user's current location in a file.
     @Published var cursorPositions: [CursorPosition]
     @Published var scrollPosition: CGPoint?
@@ -68,8 +71,6 @@ class EditorInstance: ObservableObject, Hashable {
         listenToReplaceText(workspace: workspace)
     }
 
-    // MARK: - Find/Replace Listeners
-
     func listenToFindText(workspace: WorkspaceDocument?) {
         workspace?.searchState?.$searchQuery
             .receive(on: RunLoop.main)
@@ -110,62 +111,92 @@ class EditorInstance: ObservableObject, Hashable {
             .store(in: &cancellables)
     }
 
-    // MARK: - Hashable, Equatable
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(file)
-    }
+    // MARK: - Hashable
 
     static func == (lhs: EditorInstance, rhs: EditorInstance) -> Bool {
         lhs.file == rhs.file
     }
 
-    // MARK: - RangeTranslator
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(file)
+    }
 
-    /// Translates ranges (eg: from a cursor position) to other information like the number of lines in a range.
-    class RangeTranslator: TextViewCoordinator {
-        private weak var textViewController: TextViewController?
-
-        init() { }
-
-        func prepareCoordinator(controller: TextViewController) {
-            self.textViewController = controller
-        }
-
-        func controllerDidAppear(controller: TextViewController) {
-            if controller.isEditable && controller.isSelectable {
-                controller.view.window?.makeFirstResponder(controller.textView)
-            }
-        }
-
-        func destroy() {
-            self.textViewController = nil
-        }
-
-        /// Returns the lines contained in the given range.
-        /// - Parameter range: The range to use.
-        /// - Returns: The number of lines contained by the given range. Or `0` if the text view could not be found,
-        ///            or lines could not be found for the given range.
-        func linesInRange(_ range: NSRange) -> Int {
-            guard let controller = textViewController,
-                  let scrollView = controller.view as? NSScrollView,
-                  let textView = scrollView.documentView as? TextView,
-                  // Find the lines at the beginning and end of the range
-                  let startTextLine = textView.layoutManager.textLineForOffset(range.location),
-                  let endTextLine = textView.layoutManager.textLineForOffset(range.upperBound) else {
-                return 0
-            }
-            return (endTextLine.index - startTextLine.index) + 1
-        }
-
-        func moveLinesUp() {
-            guard let controller = textViewController else { return }
-            controller.moveLinesUp()
-        }
-
-        func moveLinesDown() {
-            guard let controller = textViewController else { return }
-            controller.moveLinesDown()
-        }
+    deinit {
+        cancellables.forEach { $0.cancel() }
+        rangeTranslator.destroy()
     }
 }
+
+/// A class that holds a strong reference to the text view controller.
+class RangeTranslator: TextViewCoordinator {
+    weak var textViewController: TextViewController?
+
+    func textView(_ textView: TextView, didCheckForEvent event: NSEvent) -> Bool {
+        return false
+    }
+
+    func prepareCoordinator(controller: TextViewController) {
+        self.textViewController = controller
+    }
+
+    func controllerDidAppear(controller: TextViewController) {
+        if controller.isEditable && controller.isSelectable {
+            controller.view.window?.makeFirstResponder(controller.textView)
+        }
+    }
+
+    func destroy() {
+        self.textViewController = nil
+    }
+
+    func moveLinesUp() {
+        guard let controller = textViewController else { return }
+        controller.moveLinesUp()
+    }
+
+    func moveLinesDown() {
+        guard let controller = textViewController else { return }
+        controller.moveLinesDown()
+    }
+
+    /// Returns the number of lines contained within the given range in the current text view.
+    /// Counts newline characters and adds one for non-empty selections.
+    func linesInRange(_ range: NSRange) -> Int {
+        guard let text = textViewController?.textView.string else { return 0 }
+        guard let swiftRange = Range(range, in: text) else { return 0 }
+        let substring = text[swiftRange]
+        if substring.isEmpty { return 0 }
+        let newlineCount = substring.reduce(0) { count, ch in ch == "\n" ? count + 1 : count }
+        return newlineCount + 1
+    }
+}
+
+// MARK: - VimState
+
+final class VimState: ObservableObject {
+    enum Mode: String {
+        case normal = "NORMAL"
+        case insert = "INSERT"
+        case visual = "VISUAL"
+        case visualLine = "VISUAL LINE"
+        case replace = "REPLACE"
+    }
+
+    @Published var mode: Mode = .normal
+    @Published var commandBuffer: String = ""
+
+    // For future phases
+    // var registers: [String: String] = [:]
+    // var history: [String] = []
+
+    func enterInsertMode() {
+        mode = .insert
+        commandBuffer = ""
+    }
+
+    func enterNormalMode() {
+        mode = .normal
+        commandBuffer = ""
+    }
+}
+

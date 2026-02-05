@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import Combine
+import CodeEditTextView
+import CodeEditSourceEditor
 
 /// # StatusBarView
 ///
@@ -36,6 +39,7 @@ struct StatusBarView: View {
         HStack(alignment: .center, spacing: 10) {
 //            StatusBarBreakpointButton()
 //            StatusBarDivider()
+            StatusBarVimModeView()
             Spacer()
             StatusBarFileInfoView()
             StatusBarCursorPositionLabel()
@@ -45,12 +49,7 @@ struct StatusBarView: View {
         .padding(.horizontal, 10)
         .cursor(.resizeUpDown)
         .frame(height: Self.height)
-        .background(.bar)
-        .padding(.top, 1)
-        .overlay(alignment: .top) {
-            Divider()
-                .overlay(Color(nsColor: colorScheme == .dark ? .black : .clear))
-        }
+        .background(.ultraThinMaterial)
         .gesture(dragGesture)
         .disabled(controlActive == .inactive)
     }
@@ -79,6 +78,55 @@ extension View {
                 cursor.push()
             } else {
                 cursor.pop()
+            }
+        }
+    }
+}
+
+struct StatusBarVimModeView: View {
+    @EnvironmentObject private var editorManager: EditorManager
+    @AppSettings(\.textEditing.enableVimMode) var enableVimMode
+
+    var body: some View {
+        if enableVimMode, let vimState = editorManager.activeEditor.selectedTab?.vimState {
+            VimModeLabel(vimState: vimState)
+        }
+    }
+
+    struct VimModeLabel: View {
+        @ObservedObject var vimState: VimState
+
+        var body: some View {
+            HStack(spacing: 8) {
+                // Mode Display
+                HStack(spacing: 4) {
+                    Text(vimState.mode.rawValue)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(modeColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(modeColor.opacity(0.1))
+                        .cornerRadius(4)
+                }
+
+                // Command Buffer (if any)
+                if !vimState.commandBuffer.isEmpty {
+                    Text(vimState.commandBuffer)
+                        .font(.caption)
+                        .monospaced()
+                        .foregroundColor(.primary)
+                }
+            }
+            .padding(.horizontal, 5)
+        }
+
+        var modeColor: Color {
+            switch vimState.mode {
+            case .normal: return .blue
+            case .insert: return .green
+            case .visual, .visualLine: return .orange
+            case .replace: return .red
             }
         }
     }

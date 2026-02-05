@@ -44,19 +44,17 @@ struct WorkspacePanelView<Tab: WorkspacePanelTab, ViewModel: ObservableObject>: 
             if sidebarPosition == .side {
                 HStack(spacing: 0) {
                     WorkspacePanelTabBar(items: $tabItems, selection: $selectedTab, position: sidebarPosition)
-                    Divider()
                 }
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             if sidebarPosition == .top {
                 VStack(spacing: 0) {
-                    Divider()
                     WorkspacePanelTabBar(items: $tabItems, selection: $selectedTab, position: sidebarPosition)
-                    Divider()
+                    // Divider()
                 }
             } else if !darkDivider {
-                Divider()
+                // Divider()
             }
         }
     }

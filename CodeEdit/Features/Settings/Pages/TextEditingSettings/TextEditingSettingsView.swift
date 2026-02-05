@@ -40,6 +40,7 @@ struct TextEditingSettingsView: View {
             Section {
                 autocompleteBraces
                 enableTypeOverCompletion
+                enableVimMode
             }
             Section {
                 bracketPairHighlight
@@ -80,6 +81,10 @@ private extension TextEditingSettingsView {
 
     @ViewBuilder private var enableTypeOverCompletion: some View {
         Toggle("Enable type-over completion", isOn: $textEditing.enableTypeOverCompletion)
+    }
+
+    @ViewBuilder private var enableVimMode: some View {
+        Toggle("Enable Vim Mode", isOn: $textEditing.enableVimMode)
     }
 
     @ViewBuilder private var wrapLinesToEditorWidth: some View {

@@ -9,9 +9,9 @@ import Cocoa
 import SwiftUI
 
 final class CodeEditSplitViewController: NSSplitViewController {
-    static let minSidebarWidth: CGFloat = 242
+    static let minSidebarWidth: CGFloat = 260
     static let maxSnapWidth: CGFloat = snapWidth + 10
-    static let snapWidth: CGFloat = 272
+    static let snapWidth: CGFloat = 290
     static let minSnapWidth: CGFloat = snapWidth - 10
 
     private weak var workspace: WorkspaceDocument?
@@ -120,7 +120,7 @@ final class CodeEditSplitViewController: NSSplitViewController {
         guard let workspace else { return }
 
         let navigatorWidth = workspace.getFromWorkspaceState(.splitViewWidth) as? CGFloat
-        splitView.setPosition(navigatorWidth ?? Self.minSidebarWidth, ofDividerAt: 0)
+        splitView.setPosition(navigatorWidth ?? 260, ofDividerAt: 0)
 
         if let firstSplitView = splitViewItems.first {
             firstSplitView.isCollapsed = workspace.getFromWorkspaceState(

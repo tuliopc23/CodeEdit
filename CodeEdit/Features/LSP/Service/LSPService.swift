@@ -187,6 +187,18 @@ final class LSPService: ObservableObject {
         for languageId: LanguageIdentifier,
         workspacePath: String
     ) async throws -> LanguageServerType {
+        // If config is missing, try to resolve it
+        if languageConfigs[languageId] == nil {
+            if let binaryPath = getBinaryPath(for: languageId) {
+                logger.info("Resolved binary path for \(languageId.rawValue): \(binaryPath)")
+                languageConfigs[languageId] = LanguageServerBinary(
+                    execPath: binaryPath,
+                    args: [],
+                    env: ProcessInfo.processInfo.environment
+                )
+            }
+        }
+
         guard let serverBinary = languageConfigs[languageId] else {
             logger.error("Couldn't find language sever binary for \(languageId.rawValue)")
             throw LSPError.binaryNotFound
@@ -203,6 +215,80 @@ final class LSPService: ObservableObject {
 
         self.startListeningToEvents(for: ClientKey(languageId, workspacePath))
         return server
+    }
+
+    /// Resolves the binary path for a given language.
+    /// Priority:
+    /// 1. Developer Settings (lspBinaries)
+    /// 2. System Path (e.g. xcrun for Swift, or standard paths for others)
+    private func getBinaryPath(for languageId: LanguageIdentifier) -> String? {
+        // 1. Check Developer Settings
+        if let binary = lspBinaries.first(where: { $0.key == languageId.rawValue })?.value, !binary.isEmpty {
+            return binary
+        }
+
+        // 2. System Fallback
+        switch languageId {
+        case .swift:
+            return findSourceKitLSP()
+        case .python:
+            return findExecutable("pylsp") ?? findExecutable("pyright") ?? findExecutable("pyls")
+        case .go:
+            return findExecutable("gopls")
+        case .rust:
+            return findExecutable("rust-analyzer")
+        case .javascript, .typescript, .javascriptreact, .typescriptreact:
+            return findExecutable("typescript-language-server")
+        case .c, .cpp, .objc:
+            return findExecutable("clangd")
+        default:
+            return nil
+        }
+    }
+
+    private func findSourceKitLSP() -> String? {
+        // Try xcrun first
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+        process.arguments = ["-f", "sourcekit-lsp"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !path.isEmpty {
+                return path
+            }
+        } catch {
+            logger.error("Failed to find sourcekit-lsp via xcrun: \(error)")
+        }
+
+        return findExecutable("sourcekit-lsp")
+    }
+
+    private func findExecutable(_ name: String) -> String? {
+        // Check common paths
+        let paths = [
+            "/usr/bin",
+            "/usr/local/bin",
+            "/opt/homebrew/bin",
+            "/usr/sbin",
+            "/bin"
+        ]
+
+        for path in paths {
+            let url = URL(fileURLWithPath: path).appendingPathComponent(name)
+            if FileManager.default.isExecutableFile(atPath: url.path) {
+                return url.path
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Document Management

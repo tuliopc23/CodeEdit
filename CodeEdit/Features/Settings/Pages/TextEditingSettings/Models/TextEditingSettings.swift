@@ -33,7 +33,8 @@ extension SettingsData {
                 "Reformat at Column",
                 "Show Reformatting Guide",
                 "Invisibles",
-                "Warning Characters"
+                "Warning Characters",
+                "Vim Mode"
             ]
             if #available(macOS 14.0, *) {
                 keys.append("System Cursor")
@@ -59,6 +60,9 @@ extension SettingsData {
 
         /// A flag indicating whether to wrap lines to editor width
         var wrapLinesToEditorWidth: Bool = true
+
+        /// A flag indicating whether to enable Vim mode
+        var enableVimMode: Bool = false
 
         /// The percentage of overscroll to apply to the text view
         var overscroll: OverscrollOption = .medium
@@ -122,6 +126,10 @@ extension SettingsData {
                 Bool.self,
                 forKey: .wrapLinesToEditorWidth
             ) ?? true
+            self.enableVimMode = try container.decodeIfPresent(
+                Bool.self,
+                forKey: .enableVimMode
+            ) ?? false
             self.overscroll = try container.decodeIfPresent(
                 OverscrollOption.self,
                 forKey: .overscroll
@@ -192,6 +200,15 @@ extension SettingsData {
                 id: "prefs.text_editing.wrap_lines_to_editor_width",
                 command: {
                     Settings[\.textEditing].wrapLinesToEditorWidth.toggle()
+                }
+            )
+
+            mgr.addCommand(
+                name: "Toggle Vim Mode",
+                title: "Toggle Vim Mode",
+                id: "prefs.text_editing.enable_vim_mode",
+                command: {
+                    Settings[\.textEditing].enableVimMode.toggle()
                 }
             )
 
