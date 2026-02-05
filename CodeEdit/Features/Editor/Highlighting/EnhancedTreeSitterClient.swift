@@ -22,7 +22,7 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
 
     private var parser: Parser?
     private var query: Query?
-    private var tree: Tree?
+    private var tree: MutableTree?
 
     public init() {}
 
@@ -34,7 +34,7 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         self.parser = Parser()
 
         // Resolve Language
-        guard let language = codeLanguage.treeSitterLanguage else { return }
+        guard let language = codeLanguage.language else { return }
         do {
              try self.parser?.setLanguage(language)
         } catch {
@@ -45,9 +45,8 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         loadQueries(for: codeLanguage)
 
         // Initial Parse
-        if let text = textView.string {
-            self.tree = parser?.parse(text)
-        }
+        let text = textView.string
+        self.tree = parser?.parse(text)
     }
 
     private func loadQueries(for language: CodeLanguage) {
@@ -57,7 +56,7 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
         // Logic to load swift.scm from Bundle.main (requires file to be added to Xcode project resources)
         if let url = Bundle.main.url(forResource: "swift", withExtension: "scm"),
            let queryData = try? Data(contentsOf: url),
-           let tsLanguage = language.treeSitterLanguage {
+           let tsLanguage = language.language {
             self.query = try? Query(language: tsLanguage, data: queryData)
             print("Loaded custom swift.scm from bundle")
         } else {
@@ -101,7 +100,7 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
             
             if let parser = parser, let tree = tree {
                 tree.edit(edit)
-                self.tree = parser.parse(textView.string, oldTree: tree)
+                self.tree = parser.parse(tree: tree, string: textView.string)
             }
         }
 
@@ -119,25 +118,37 @@ public class EnhancedTreeSitterClient: HighlightProviding, ObservableObject {
     }
 
     public func queryHighlightsFor(textView: TextView, range: NSRange, completion: @escaping @MainActor (Result<[HighlightRange], any Error>) -> Void) {
-        guard let tree = tree, let query = query else {
+        guard let tree = tree, let query = query, let rootNode = tree.rootNode else {
             completion(.success([]))
             return
         }
         
         // Execute query
-        let cursor = query.execute(node: tree.rootNode, in: tree)
+        let cursor = query.execute(node: rootNode, in: tree)
         cursor.setRange(range)
         
         var highlights: [HighlightRange] = []
         
         for match in cursor {
             for capture in match.captures {
-                let captureName = capture.name
-                let themeKey = TokenContract.mapCaptureToThemeKey(captureName)
+                guard let captureNameString = capture.name else { continue }
+                
+                // Resolve CaptureName
+                var captureName = CaptureName.fromString(captureNameString)
+                if captureName == nil {
+                    // Try splitting by dot (e.g. "keyword.control" -> "keyword")
+                    let parts = captureNameString.split(separator: ".")
+                    if let first = parts.first {
+                        captureName = CaptureName.fromString(String(first))
+                    }
+                }
+                
+                guard let finalCaptureName = captureName else { continue }
+                
                 let range = capture.node.range
                 
                 // Map to HighlightRange
-                highlights.append(HighlightRange(range: range, capture: themeKey))
+                highlights.append(HighlightRange(range: range, capture: finalCaptureName))
             }
         }
         
