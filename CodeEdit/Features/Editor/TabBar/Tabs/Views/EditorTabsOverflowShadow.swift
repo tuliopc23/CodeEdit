@@ -23,7 +23,7 @@ struct EditorTabsOverflowShadow: View {
             .frame(maxHeight: .infinity)
             .frame(width: width)
             .foregroundColor(.clear)
-            .background(
+            .background {
                 LinearGradient(
                     gradient: Gradient(
                         stops: [
@@ -40,7 +40,7 @@ struct EditorTabsOverflowShadow: View {
                     ? activeState == .inactive ? 0.25882353 : 1
                     : activeState == .inactive ? 0.09803922 : 0.25882353
                 )
-            )
+            }
             .allowsHitTesting(false)
     }
 }
